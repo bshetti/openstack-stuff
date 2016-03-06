@@ -1,0 +1,22 @@
+---
+- hosts: openstack[1]
+  sudo: yes
+  tasks:
+  - name: rabbitmq_clustering | config | stopping rabbitmq app
+    command: rabbitmqctl stop_app
+
+  - name: rabbitmq_clustering | config | resetting rabbitmq app
+    command: rabbitmqctl reset
+
+  - name: rabbitmq_clustering | config | joining rabbitmq cluster
+    command: rabbitmqctl join_cluster 'rabbit@{{ ansible_local.preferences.replica.remote_name }}' 
+
+  - name: rabbitmq_clustering | config | starting rabbitmq app
+    command: rabbitmqctl start_app
+
+- hosts: openstack
+  sudo: yes
+  tasks:
+  - name: rabbitmq clustering policy
+    command: "/sbin/rabbitmqctl -q -n rabbit set_policy -p / ha-all '^(?!amq\\.).*' '{\"ha-mode\": \"all\"}' 0"
+
